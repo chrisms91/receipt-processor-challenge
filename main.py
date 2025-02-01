@@ -1,7 +1,8 @@
 from uuid import uuid4
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from models import Receipt
 from service import process_receipt, get_score
@@ -20,6 +21,22 @@ GET /receipts/:id/points
         ex) {"points": 32}
 
 """
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """
+    Custom exception handler for validation error to return Bad Request instead of 422
+    """
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder(
+            {
+                "detail": "The receipt is invalid.",
+                "errors": exc.errors(),
+            }
+        ),
+    )
 
 
 @app.get("/")
@@ -45,5 +62,8 @@ async def get_receipt_points_endpoint(id: str):
     """
     score = get_score(id)
     if not score:
-        raise HTTPException(status_code=404, detail="No receipt found for that ID.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No receipt found for that ID.",
+        )
     return {"points": score}

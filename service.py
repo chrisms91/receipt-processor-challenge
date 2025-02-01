@@ -1,10 +1,9 @@
 import math
+from uuid import uuid4
 from datetime import datetime, time
-
-# from fastapi import HTTPException
+from fastapi import status
 from starlette.exceptions import HTTPException
 from models import Receipt
-from uuid import uuid4
 
 # in-memory store mapping receipt_id to its computed score
 receipt_score_store = {}
@@ -64,7 +63,7 @@ def calculate_score(receipt: Receipt) -> int:
             total_points += 25
     except ValueError:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"The receipt is invalid: Invalid total value '{receipt.total}'.",
         )
 
@@ -84,7 +83,7 @@ def calculate_score(receipt: Receipt) -> int:
                 total_points += points_from_item
             except ValueError:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"The receipt is invalid: Invalid item's price value '{item.price}'.",
                 )
 
@@ -95,7 +94,7 @@ def calculate_score(receipt: Receipt) -> int:
             total_points += 6
     except ValueError:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"The receipt is invalid: Invalid purchaseDate value '{receipt.purchaseDate}'",
         )
 
@@ -107,7 +106,7 @@ def calculate_score(receipt: Receipt) -> int:
             total_points += 10
     except ValueError:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"The receipt is invalid: Invalid purchaseTime value '{receipt.purchaseTime}'",
         )
 
