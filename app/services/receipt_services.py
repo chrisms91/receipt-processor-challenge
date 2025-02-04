@@ -1,13 +1,13 @@
 import math
 from uuid import uuid4
-from datetime import datetime, time
-from fastapi import status
-from starlette.exceptions import HTTPException
+from datetime import time
 from app.models.receipt import Receipt
-from app.utills import safe_float, safe_datetime
+from app.utills import safe_float, safe_datetime, generate_receipt_hash
 
 # in-memory store mapping receipt_id to its computed score
 receipt_score_store = {}
+# in-memory store mapping hash to uuid to check duplicate receipts
+receipt_hash_store = {}
 
 
 def process_receipt(receipt: Receipt) -> str:
@@ -15,8 +15,14 @@ def process_receipt(receipt: Receipt) -> str:
     Process receipt and calculate its score
     storing the score in the memory, and returning the receipt_id generated
     """
+    receipt_hash = generate_receipt_hash(receipt)
+    if receipt_hash in receipt_hash_store:
+        # Receipt already exists. Returning the existing ID
+        return receipt_hash_store[receipt_hash]
+
     receipt_id = str(uuid4())
     score = calculate_score(receipt)
+    receipt_hash_store[receipt_hash] = receipt_id
     receipt_score_store[receipt_id] = score
     return receipt_id
 
@@ -55,7 +61,6 @@ def calculate_score(receipt: Receipt) -> int:
         total_points += 50
 
     # 25 points if the total is a multiple of 0.25
-
     total_float = safe_float(receipt.total, "total")
     if total_float % 0.25 == 0:
         total_points += 25
@@ -81,8 +86,6 @@ def calculate_score(receipt: Receipt) -> int:
 
     # 10 points if the time of purchase is after 2:00pm and before 4:00pm.
     # Assuming "after" and "before" do not include 2:00 PM and 4:00 PM.
-
-    # purchase_time = datetime.strptime(receipt.purchaseTime, "%H:%M").time()
     purchase_time = safe_datetime(receipt.purchaseTime, "%H:%M", "purchaseTime").time()
     if time(14, 0) < purchase_time < time(16, 0):
         total_points += 10
