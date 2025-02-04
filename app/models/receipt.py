@@ -23,6 +23,28 @@ class Item(BaseModel):
 
 
 class Receipt(BaseModel):
+    @field_validator("purchaseDate")
+    def validate_purchase_date(cls, v: str) -> str:
+        """
+        Validates if purchaseDate is in the YYYY-MM-DD format
+        """
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("purchaseDate must be in YYYY-MM-DD format")
+        return v
+
+    @field_validator("purchaseTime")
+    def validate_purchase_time(cls, v: str) -> str:
+        """
+        Validates if purchaseTime is in the HH:MM (24-hour) format
+        """
+        try:
+            datetime.strptime(v, "%H:%M")
+        except ValueError:
+            raise ValueError("purchaseTime must be in HH:MM 24-hour format")
+        return v
+
     retailer: str = Field(
         ...,
         pattern=r"^[\w\s\-&]+$",
@@ -59,25 +81,3 @@ class Receipt(BaseModel):
             "example": "6.49",
         },
     )
-
-    @field_validator("purchaseDate")
-    def validate_purchase_date(cls, v: str) -> str:
-        """
-        Validates if purchaseDate is in the YYYY-MM-DD format
-        """
-        try:
-            datetime.strptime(v, "%Y-%m-%d")
-        except ValueError:
-            raise ValueError("purchaseDate must be in YYYY-MM-DD format")
-        return v
-
-    @field_validator("purchaseTime")
-    def validate_purchase_time(cls, v: str) -> str:
-        """
-        Validates if purchaseTime is in the HH:MM (24-hour) format
-        """
-        try:
-            datetime.strptime(v, "%H:%M")
-        except ValueError:
-            raise ValueError("purchaseTime must be in HH:MM 24-hour format")
-        return v

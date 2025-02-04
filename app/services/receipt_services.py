@@ -3,7 +3,8 @@ from uuid import uuid4
 from datetime import datetime, time
 from fastapi import status
 from starlette.exceptions import HTTPException
-from models import Receipt
+from app.models.receipt import Receipt
+from app.utills import safe_float, safe_datetime
 
 # in-memory store mapping receipt_id to its computed score
 receipt_score_store = {}
@@ -14,7 +15,6 @@ def process_receipt(receipt: Receipt) -> str:
     Process receipt and calculate its score
     storing the score in the memory, and returning the receipt_id generated
     """
-    print(receipt)
     receipt_id = str(uuid4())
     score = calculate_score(receipt)
     receipt_score_store[receipt_id] = score
@@ -42,8 +42,6 @@ def calculate_score(receipt: Receipt) -> int:
         multiply the price by 0.2 and round up to the nearest integer, then add that many points.
     - 6 points if the day in the purchase date is odd
     - 10 points if the time of the purchase is after 2:00pm and before 4:00pm
-
-    For any ValueError caused by converting a string to a float or datetime, the process will stop and return a 400 Bad Request with an error message.
     """
     total_points = 0
 
@@ -57,15 +55,10 @@ def calculate_score(receipt: Receipt) -> int:
         total_points += 50
 
     # 25 points if the total is a multiple of 0.25
-    try:
-        total_float = float(receipt.total)
-        if total_float % 0.25 == 0:
-            total_points += 25
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"The receipt is invalid: Invalid total value '{receipt.total}'.",
-        )
+
+    total_float = safe_float(receipt.total, "total")
+    if total_float % 0.25 == 0:
+        total_points += 25
 
     # 5 points for every two items on the receipt.
     num_pairs = len(receipt.items) // 2
@@ -77,37 +70,21 @@ def calculate_score(receipt: Receipt) -> int:
     for item in receipt.items:
         short_desc = item.shortDescription.strip()
         if len(short_desc) % 3 == 0:
-            try:
-                price = float(item.price)
-                points_from_item = math.ceil(price * 0.2)
-                total_points += points_from_item
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"The receipt is invalid: Invalid item's price value '{item.price}'.",
-                )
+            price = safe_float(item.price, "price for item")
+            points_from_item = math.ceil(price * 0.2)
+            total_points += points_from_item
 
     # 6 points if the day in the purchase date is odd
-    try:
-        purchase_date = datetime.strptime(receipt.purchaseDate, "%Y-%m-%d")
-        if purchase_date.day % 2 == 1:
-            total_points += 6
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"The receipt is invalid: Invalid purchaseDate value '{receipt.purchaseDate}'",
-        )
+    purchase_date = safe_datetime(receipt.purchaseDate, "%Y-%m-%d", "purchaseDate")
+    if purchase_date.day % 2 == 1:
+        total_points += 6
 
     # 10 points if the time of purchase is after 2:00pm and before 4:00pm.
     # Assuming "after" and "before" do not include 2:00 PM and 4:00 PM.
-    try:
-        purchase_time = datetime.strptime(receipt.purchaseTime, "%H:%M").time()
-        if time(14, 0) < purchase_time < time(16, 0):
-            total_points += 10
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"The receipt is invalid: Invalid purchaseTime value '{receipt.purchaseTime}'",
-        )
+
+    # purchase_time = datetime.strptime(receipt.purchaseTime, "%H:%M").time()
+    purchase_time = safe_datetime(receipt.purchaseTime, "%H:%M", "purchaseTime").time()
+    if time(14, 0) < purchase_time < time(16, 0):
+        total_points += 10
 
     return total_points
