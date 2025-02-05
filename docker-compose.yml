@@ -1,22 +1,20 @@
-version: "3.8"
-
 services:
-  web:
+  api:
     build: .
     ports:
-      - "8000:8000"
-    # environment:
-    #   - PYTHONDONTWRITEBYTECODE=1
-    #   - PYTHONUNBUFFERED=1
+      - "8080:8080"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
-    command: fastapi run app/main.py
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8080
 
   tests:
     build: .
-    # environment:
-    #   - PYTHONDONTWRITEBYTECODE=1
-    #   - PYTHONUNBUFFERED=1
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
     command: pytest -v
