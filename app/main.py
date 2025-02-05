@@ -32,5 +32,5 @@ app.include_router(receipts.router, prefix="/receipts", tags=["receipts"])
 @app.get("/")
 def read_root():
     return {
-        "message": "Welcome to the receipt-processor API. Please visit /docs page for more details."
+        "message": "Welcome to the receipt-processor API. Please visit the /docs page to view the available routes."
     }
