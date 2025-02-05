@@ -1,4 +1,5 @@
 import pytest
+from app.models.receipt import Receipt, Item
 from app.services.receipt_services import (
     points_for_retailer_name,
     points_for_round_dollar_amount,
@@ -8,8 +9,6 @@ from app.services.receipt_services import (
     points_for_odd_day,
     points_for_purchase_time,
     calculate_score,
-    Receipt,
-    Item,
 )
 
 
