@@ -23,7 +23,7 @@ To test the API, use `curl` or a browser.
 Submit a receipt for processing:
 
 ```bash
-curl -X POST http://localhost:8000/receipts/process \
+curl -X POST http://localhost:8080/receipts/process \
      -H "Content-Type: application/json" \
      -d '{
          "retailer": "M&M Corner Market",
@@ -50,7 +50,7 @@ curl -X POST http://localhost:8000/receipts/process \
 Retrieve the points for a processed receipt by using the returned `id`:
 
 ```bash
-curl -X GET http://localhost:8000/receipts/bb4f4576-28b6-4655-9faf-3f39fd0f9fe4/points
+curl -X GET http://localhost:8080/receipts/bb4f4576-28b6-4655-9faf-3f39fd0f9fe4/points
 ```
 
 Alternatively, open the following URL in your browser:
