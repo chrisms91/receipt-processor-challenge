@@ -1,7 +1,6 @@
 import pytest
 from fastapi import status
 from app.models.receipt import Receipt
-from app.main import app
 
 
 def test_process_receipt_valid(test_client):
@@ -57,3 +56,7 @@ def test_get_receipt_points(test_client):
 
     data = get_response.json()
     assert data["points"] == valid_score
+
+
+def test_receipt_submission(test_client):
+    pass
